@@ -1,0 +1,25 @@
+result_13.txt
+Assay Name: Assay_1 11.10.16
+
+Date:[2016.11.30] Time:[9:38:10]
+
+[ROI 1] W1
+	[2] signal [525]
+	[2] background [361]
+
+[ROI 1] Well 2
+	[2] signal [949]
+	[2] background [722]
+
+[ROI 1] Well 3
+	[2] signal [761]
+	[2] background [433]
+
+[ROI 1] Well 4
+	[2] signal [1063]
+	[2] background [313]
+
+[ROI 1] New ROI
+	[2] signal [268]
+	[2] background [405]
+

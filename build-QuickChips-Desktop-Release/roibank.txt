@@ -1,0 +1,7 @@
+[ROI 1]Test ROI #1
+	[1] signal,100,100,10
+	[1] background,150,150,20
+	[2] background,175,175,20
+[ROI 2]Test ROI #2
+	[1] signal,150,100,15
+	[1] background,250,150,25

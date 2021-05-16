@@ -1,0 +1,15 @@
+result_4.txt
+Assay Name: Assay_1 11.10.16
+
+Date:[2017.2.17] Time:[17:21:56]
+
+[ROI 1] Test ROI #1
+	[2] signal [152]
+	[3] background [55]
+	[2] signalDelta [97]
+
+[ROI 1] Test ROI #2
+	[2] signal [73]
+	[2] background [54]
+	[2] signalDelta [19]
+

@@ -1,0 +1,15 @@
+Assay Name, Assay_1 11.10.16
+system,target,command,value
+heater,heater1,setHeaterTarget,4300
+heater,heater1,setDirection,1
+camera,camera,setExposure,30000
+system,system,wait,15000
+camera,camera,captureDark,1
+system,system,wait,5000
+illumination,illumination1,setDirection,1
+system,system,wait,5000
+camera,camera,capture,1
+system,system,wait,5000
+heater,heater1,setDirection,0
+system,system,wait,1000
+illumination,illumination1,setDirection,0

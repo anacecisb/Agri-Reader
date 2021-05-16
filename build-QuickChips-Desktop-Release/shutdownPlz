@@ -1,0 +1,4 @@
+#!/bin/bash
+date > /tmp/shutdown.time
+exit 0
+ssh -p 5522 localhost shutdown -h now
