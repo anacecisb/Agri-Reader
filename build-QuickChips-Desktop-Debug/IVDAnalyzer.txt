@@ -1,0 +1,480 @@
+//Processing script for processing Images
+//Written by Gregory Reneff of IVD Vision LLC.
+//Copyright May 2016
+//No license is granted here.  See seperate licensing agreement.
+
+//Precursor stuff
+ARGH=getArgument();
+
+//Customer Defines
+manualrun=0;
+manualrun=1;  //Uncomment to run manually.  Don't forget to comment back to run automatically
+autoall=0;
+//autoall=1; //Uncomment to run manually.  Don't forget to comment back to run automatically
+
+
+
+
+
+//IVD Defines
+if (manualrun)
+{
+	ARGH="C:\\Shared\\050316 rawimgs\\_rerun_"+genDateCode();  //Don't forget the trailing slash!  //MANUAL RUN!!!!
+}
+if (autoall)
+{
+	ARGH="C:\\Shared\\050316 rawimgs\\_rerun_"+genDateCode();  //Don't forget the trailing slash!  //MANUAL RUN!!!!
+}
+
+DemoMode=0;
+
+IVD_Prefix="Test_"+genDateCode();
+
+LinuxMode=0; //Define 0 for windows system, 1 for linux
+
+
+//Crunch time!
+
+if (LinuxMode)
+{
+	IVDDevice="/dev/video2";
+	IVDSerDev="/dev/ttyS0";
+	IVDExposure=2000;
+	IVDDir="/tmp/";  //Don't forget the trailing slash!
+	IVDDarkFile1=IVD_Prefix+"_Dark1.raw";
+	IVDSignalFile1=IVD_Prefix+"_Exp1.raw";
+	IVDDarkFile2=IVD_Prefix+"_Dark1.raw";
+	IVDSignalFile2=IVD_Prefix+"_Exp2.raw";
+	IVDROIFile="RoiSet.zip";
+	IVDOUTFile="IVDResults.txt";
+}
+else
+{
+//	if (manualrun)
+//	{
+//		ARGH="D:\\test\\images\\TestRun";  //Don't forget the trailing slash!  //MANUAL RUN!!!!
+//	}
+//debug;
+
+	IVDDir=File.getParent(ARGH)+"\\";
+	IVD_Prefix=File.getName(ARGH);
+	IVDDarkFile1="Dark1.raw";
+	IVDSignalFile1="Exp1.raw";
+	IVDROIFileName="RoiSet.zip";
+	//IVDROIFile=getDirectory("imagej")+"..\\imagejconfig\\RoiSet.zip";
+	if (autoall)
+	{	
+		IVDROIFile=IVDDir+IVDROIFileName;
+		IVDOUTFile="IVDrerunResults.txt";
+
+	}
+	else if (manualrun)
+	{	
+		IVDROIFile=IVDDir+IVDROIFileName;
+		IVDOUTFile="IVDrerunResults.txt";
+
+	}
+	else
+	{
+		IVDROIFile=IVDDir+"..\\..\\"+IVDROIFileName;
+		IVDOUTFile="IVDResults.txt";
+	}
+}
+
+if (autoall)
+{
+}
+//debug;
+IVDwidth=1280;
+IVDheight=960;
+
+
+//End of Configuration.  Executable Macro code follows
+if (DemoMode)
+{
+	IVD_Prefix="DemoTest_"+genDateCode();
+	if (LinuxMode)
+	{
+		IVDDir="/tmp/";
+	}
+
+}
+
+//print("Start Time:"+genDateCode());
+
+roiManager("reset")
+//close("\\Others");;
+run("Close All");
+
+
+if (LinuxMode)
+{
+	//BAsically capture prior to analysis.  Not needed with IVD NOW!!!
+	run("serial ext");
+	Ext.open(IVDSerDev,115200,"");
+	blackhole=exec("v4l2-ctl -d " + IVDDevice + " -c exposure_absolute=" + IVDExposure);
+	if (DemoMode)
+	{
+		wait(1000);
+	}
+	else
+	{
+		wait(10000);
+	}
+	sendSerial("9,setDir,1\r");
+	sendSerial("10,setDir,0\r");
+	//showMessage("Turn Green Light on and Yellow Light Off");
+	blackhole=exec("see3camguvcview -d " + IVDDevice + " -f y16 -s " + IVDwidth + "x" + IVDheight + " -i " + IVDDir + IVDSignalFile1 + " -m 1 -c 1 --no_display --exit_on_close -c 1");
+	sendSerial("9,setDir,0\r");
+	sendSerial("10,setDir,1\r");
+	if (DemoMode)
+	{
+		wait(1000);
+	}
+	else
+	{
+		wait(40000);
+	}
+	//showMessage("Turn Green Light off and Yellow light on");
+	blackhole=exec("see3camguvcview -d " + IVDDevice + " -f y16 -s " + IVDwidth + "x" + IVDheight + " -i " + IVDDir + IVDSignalFile2 + " -m 1 -c 1 --no_display --exit_on_close -c 1");
+	sendSerial("9,setDir,0\r");
+	sendSerial("10,setDir,0\r");
+	//showMessage("Turn Lights off");
+	blackhole=exec("see3camguvcview -d " + IVDDevice + " -f y16 -s " + IVDwidth + "x" + IVDheight + " -i " + IVDDir + IVDDarkFile1 + " -m 1 -c 1 --no_display --exit_on_close -c 1");
+	sendSerial("9,setDir,1\r");
+	sendSerial("10,setDir,1\r");
+	//showMessage("Turn both Lights on for next run");
+	Ext.close(); //Close the Serial Port	
+}
+else
+{
+
+}
+
+if (autoall)
+{
+	expFileList=getFileextList(IVDDir,"raw.raw");
+	exploops=lengthOf(expFileList);
+	darkFileList=getFileextList(IVDDir,"dark.raw");
+	darkloops=lengthOf(darkFileList);
+
+	if(exploops != darkloops)
+	{
+		exit("Error: the number of dark frames does not match the number of raw frames.");
+	}
+
+//dark time stamps
+//	for(i=0;i<darkloops;i++)
+//	{
+//		print(IVDDir+darkFileList[i]+": " +File.lastModified(IVDDir+darkFileList[i]));
+//		darkFileList[i]=File.lastModified(IVDDir+darkFileList[i])+":"+darkFileList[i];
+//	}
+//debug;
+//	Array.sort(darkFileList);
+
+//	darkTimes=newArray(darkloops);
+//	for(i=0;i<darkloops;i++)
+//	{
+//		darkTimes[i]=substring(darkFileList[i],0,indexOf(darkFileList[i],":")-1);
+//		darkFileList[i]=substring(darkFileList[i],indexOf(darkFileList[i],":"),lengthOf(darkFileList[i]));
+//
+//	}
+
+
+//Assume Now File format so alpha sorting SHOULD also be date sorted.   This will also assume no missing and/or extra files.  May add checks on tags later but for now You are warned!
+	Array.sort(expFileList);
+	Array.sort(darkFileList);
+
+	if (File.isDirectory(IVDDir+"jpegs"))
+	{
+	}
+	else
+	{
+		File.makeDirectory(IVDDir+"jpegs") ;
+	}
+
+}
+else
+{
+	exploops=1;
+}
+
+//Start of Loop
+//debug;
+for (i=0;i<exploops;i++)
+{
+
+if(autoall)
+{
+	IVDDarkFile1=File.getName(darkFileList[i]);
+	IVDSignalFile1=File.getName(expFileList[i]);
+	IVD_Prefix=IVDSignalFile1+File.getName(ARGH);
+}
+
+
+
+//open(IVDDir+IVDDarkFile1);
+RawOpen=IVDDir+IVDDarkFile1;
+run("Raw...", "open=[RawOpen] image=[16-bit Signed] width=IVDwidth height=IVDheight offset=0 number=1 gap=0 little-endian");
+IVDDark1ImgID=getImageID();
+run("32-bit");
+
+//open(IVDDir+IVDSignalFile1);
+RawOpen=IVDDir+IVDSignalFile1;
+run("Raw...", "open=[RawOpen] image=[16-bit Signed] width=IVDwidth height=IVDheight offset=0 number=1 gap=0 little-endian");
+IVDSignal1ImgID=getImageID();
+run("32-bit");
+
+imageCalculator("Subtract create 32-bit", IVDSignal1ImgID,IVDDark1ImgID);
+IVDWorking1ImgID=getImageID();
+
+open(IVDROIFile);
+
+selectImage(IVDWorking1ImgID);
+run("Select All");
+run("Enhance Contrast...", "saturated=0.7");
+
+roiManager("Show All");
+if (autoall)
+{
+}
+else
+{
+	waitForUser("Murphy Opp.","Are these ROI's ok?\nPress ok to continue");
+}
+
+MaxSignalNum=0;
+HeaderOutLine="";
+DataLineOut="";
+for (roiidx=0;roiidx<roiManager("count");roiidx++)
+{
+	roiManager("select",roiidx);
+	signalroilabel=Roi.getName();
+
+	if (indexOf(signalroilabel,"Signal")<0)
+		continue; //Not found so move on to next ROI
+	signalroiname=split(signalroilabel,"(Signal)");
+
+	signalroinum=parseInt(signalroiname[lengthOf(signalroiname)-1]);
+	if (signalroinum==NaN)
+	{
+		 print("Signal ROI "+signalroilabel+" is not numbered... skipping");
+		 continue;
+	}
+	
+	for (bgroiidx=0;bgroiidx<roiManager("count");bgroiidx++)
+	{
+		roiManager("select",bgroiidx);
+		bgroilabel=Roi.getName();
+		bgroiname=split(bgroilabel,"(Background)");
+		bgroinum=parseInt(bgroiname[lengthOf(bgroiname)-1]);
+//debug;	print(roiidx+"\t "+bgroiidx);
+		if (bgroinum==signalroinum)
+		{
+
+			break;
+		}
+	}
+//debug;	print(roiidx+"\t "+bgroiidx);
+	if (bgroiidx>=roiManager("count"))
+	{
+//debug;	print(bgroiidx);
+		 print("Matching BG ROI for "+signalroilabel+" not found... skipping");
+
+		 continue;
+	}
+	if (signalroinum>MaxSignalNum)
+		MaxSignalNum=signalroinum;
+		
+	roiManager("select",roiidx);
+	getStatistics(Signal_area, Signal_mean, Signal_min, Signal_max, Signal_std);
+	roiManager("select",bgroiidx);
+	getStatistics(Background_area, Background_mean, Background_min, Background_max, Background_std);
+	DataLineOut=DataLineOut+"\t"+Signal_mean+"\t"+Signal_area+"\t"+Background_mean+"\t"+Background_area;
+	HeaderOutLine=HeaderOutLine+"\tSignal"+signalroinum+"_mean"+"\tSignal"+signalroinum+"_area"+"\tBackground"+signalroinum+"_mean"+"\tBackground"+signalroinum+"_area";
+
+}//End ROI Loop
+
+
+
+//roiSelect("Signal1");
+//getStatistics(Signal1_area, Signal1_mean, Signal1_min, Signal1_max, Signal1_std);
+//roiSelect("Background1");
+//getStatistics(Background1_area, Background1_mean, Background1_min, Background1_max, Background1_std);
+
+
+//print(IVD_Prefix+": "+Background2_mean/Background1_mean*Signal1_area/Signal2_area);
+//print(Signal1_mean+"\t "+Background1_mean+"\t "+Signal2_mean+"\t "+Background2_mean);
+
+if (File.exists(IVDDir+IVDOUTFile))
+{
+}
+else
+{
+	//File.append("Test ID\tRatio\tMembraine1 Mean\tBackground1 Mean\tMembraine2 Mean\tBackground2 Mean"	,IVDDir+IVDOUTFile);
+	//File.append("Test ID\tSignal1 Mean\tSignal1 Area\tBackground1 Mean\tBackground1 Area"	,IVDDir+IVDOUTFile);
+	File.append("Test ID"+HeaderOutLine,IVDDir+IVDOUTFile);
+}
+
+//File.append(IVD_Prefix+"\t"+Background2_mean/Background1_mean*Signal1_area/Signal2_area+"\t"+Signal1_mean+"\t"+Background1_mean+"\t"+Signal2_mean+"\t"+Background2_mean,IVDDir+IVDOUTFile);
+//File.append(IVD_Prefix+"\t"+Signal1_mean+"\t"+Signal1_area+"\t"+Background1_mean+"\t"+Background1_area,IVDDir+IVDOUTFile);
+File.append(IVD_Prefix+DataLineOut,IVDDir+IVDOUTFile);
+//print("End Time:"+genDateCode());
+
+
+outfile=replace(IVD_Prefix,"]"," ");
+if (autoall)
+{
+	outpath=IVDDir+"jpegs\\"+outfile+".jpeg";
+	rawoutpath=IVDDir+outfile+"_darkcorrected.tif";
+
+}
+else
+{
+	outpath=IVDDir+"..\\"+outfile+".jpeg";
+	rawoutpath=IVDDir+outfile+"_darkcorrected.tif";
+
+}
+
+selectImage(IVDWorking1ImgID);
+roiManager("deselect")
+run("Select None");
+roiManager("Show None");
+//debug;
+run("Input/Output...","save");
+saveAs("Tiff",rawoutpath);
+run("Select All");
+run("Duplicate...", " ");
+IVDJPGImgID=getImageID();
+run("Macro...", "code=v=log(v)*255/log(4096)");
+setMinAndMax(0, 255);
+run("8-bit");
+roiManager("Show All");
+run("Flatten");
+
+saveAs("jpeg",outpath);
+
+
+
+if (autoall)
+{
+	run("Close All");
+
+}
+
+}//End of File Loop
+
+
+//debug;
+if (manualrun)
+{
+}
+else
+{
+	run("Quit");
+}
+
+/*
+roiSelect(RoiName)
+Function to take a String and select the first ROI in the ROI manager with that name
+Returns the index number of said ROI, or -1 if not found.
+*/
+function roiSelect(RoiName)
+{
+	ret=-1;
+	for (i=0;i<roiManager("count");i++)
+	{
+		roiManager("select",i);
+		if (Roi.getName()==RoiName)
+		{
+			ret=i;
+			break;
+		}
+	}
+	return ret;
+	
+}
+
+function getDirFileextList(ext)
+{
+directory=getDirectory("Choose a Directory");
+DirList=getFileList(directory);
+i=0;
+j=0;
+
+TrimmedDirList=newArray(lengthOf(DirList));
+for (i=0;i<lengthOf(DirList);i++)
+{
+	if (endsWith(DirList[i],"/"))
+	{
+		//Do nothing with subdirectories		
+	}
+	else if (endsWith(DirList[i],ext))
+	{
+		TrimmedDirList[j++]=DirList[i];
+	}
+	else
+	{
+		//Do nothing with other files
+	}
+}
+
+TrimmedDirList=Array.trim(TrimmedDirList,j);
+return TrimmedDirList;
+}
+
+function getFileextList(dir,ext)
+{
+directory=dir;
+DirList=getFileList(directory);
+i=0;
+j=0;
+
+TrimmedDirList=newArray(lengthOf(DirList));
+for (i=0;i<lengthOf(DirList);i++)
+{
+	if (endsWith(DirList[i],"/"))
+	{
+		//Do nothing with subdirectories		
+	}
+	else if (endsWith(DirList[i],ext))
+	{
+		TrimmedDirList[j++]=DirList[i];
+	}
+	else
+	{
+		//Do nothing with other files
+	}
+}
+
+TrimmedDirList=Array.trim(TrimmedDirList,j);
+return TrimmedDirList;
+}
+
+
+function genDateCode()
+{
+
+	getDateAndTime(year, month, dayOfWeek, dayOfMonth, hour, minute, second, msec);
+//	test=toString(year)+toString(month)+toString(dayOfMonth)+"_"+toString(hour)+toString(minute)+toString(second)+"."+toString(msec);
+//debug;
+test=toString(year)+substring(toString((month+1)/100,2),2,4)+substring(toString(dayOfMonth/100,2),2,4)+"_"+substring(toString(hour/100,2),2,4)+substring(toString(minute/100,2),2,4)+substring(toString(second/100,2),2,4)+"."+substring(toString(msec/1000,3),2,5);
+	return test;
+}
+
+
+//Assumes already open
+function sendSerial(writeString)
+{
+	for (i=0;i<lengthOf(writeString);i++)
+	{
+	wait(15);
+	Ext.write(substring(writeString,i));
+	}
+	wait(40);
+}
+//Changelog
+//05132016
+//Export Dark Corrected Image as tiff for later reuse
+//Code to process a full directory of images.  Assumes that Raw images match dark images in MDXNow 1.6 filename format
+//Fix leading zero abscense in datecode generationn
